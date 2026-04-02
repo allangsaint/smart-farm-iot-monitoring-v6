@@ -1,0 +1,7 @@
+.idea
+.bsp
+/target/
+project/target
+/project/project/target/
+/tmp/
+/.claude/settings.local.json

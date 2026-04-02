@@ -1,0 +1,106 @@
+# =============================================================================
+# Docker Compose - Smart Farm IoT Monitoring
+# =============================================================================
+# Servicios:
+#   - kafka1, kafka2, kafka3: Cluster Kafka (KRaft, sin ZooKeeper)
+#   - jupyter: Jupyter Notebook para analisis
+#   - prometheus: Recoleccion de metricas
+#   - grafana: Visualizacion de dashboards
+#   - node-exporter: Metricas del sistema operativo host
+# =============================================================================
+
+services:
+  kafka1:
+    image: confluentinc/cp-kafka:8.0.4
+    container_name: kafka1
+    ports:
+      - "9092:9092"
+      - "9308:9308"
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: 'CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT'
+      KAFKA_ADVERTISED_LISTENERS: 'PLAINTEXT://kafka1:29092,PLAINTEXT_HOST://localhost:9092'
+      KAFKA_PROCESS_ROLES: 'broker,controller'
+      KAFKA_CONTROLLER_QUORUM_VOTERS: '1@kafka1:29093,2@kafka2:29093,3@kafka3:29093'
+      KAFKA_LISTENERS: 'PLAINTEXT://kafka1:29092,CONTROLLER://kafka1:29093,PLAINTEXT_HOST://0.0.0.0:9092'
+      KAFKA_INTER_BROKER_LISTENER_NAME: 'PLAINTEXT'
+      KAFKA_CONTROLLER_LISTENER_NAMES: 'CONTROLLER'
+      CLUSTER_ID: 'MkU3OEVBNTcwNTJENDM2Qk'
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 3
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 2
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 3
+      # JMX Exporter para Prometheus
+      KAFKA_JMX_PORT: 9999
+      KAFKA_JMX_HOSTNAME: kafka1
+      KAFKA_OPTS: '-javaagent:/opt/jmx-exporter/jmx_prometheus_javaagent.jar=9308:/opt/jmx-exporter/kafka_jmx_config.yml'
+    volumes:
+      - ./monitoring/jmx_exporter:/opt/jmx-exporter
+
+  kafka2:
+    image: confluentinc/cp-kafka:8.0.4
+    container_name: kafka2
+    ports:
+      - "9093:9093"
+    environment:
+      KAFKA_NODE_ID: 2
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: 'CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT'
+      KAFKA_ADVERTISED_LISTENERS: 'PLAINTEXT://kafka2:29092,PLAINTEXT_HOST://localhost:9093'
+      KAFKA_PROCESS_ROLES: 'broker,controller'
+      KAFKA_CONTROLLER_QUORUM_VOTERS: '1@kafka1:29093,2@kafka2:29093,3@kafka3:29093'
+      KAFKA_LISTENERS: 'PLAINTEXT://kafka2:29092,CONTROLLER://kafka2:29093,PLAINTEXT_HOST://0.0.0.0:9093'
+      KAFKA_INTER_BROKER_LISTENER_NAME: 'PLAINTEXT'
+      KAFKA_CONTROLLER_LISTENER_NAMES: 'CONTROLLER'
+      CLUSTER_ID: 'MkU3OEVBNTcwNTJENDM2Qk'
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 3
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 2
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 3
+      KAFKA_JMX_PORT: 9999
+      KAFKA_JMX_HOSTNAME: kafka2
+      KAFKA_OPTS: '-javaagent:/opt/jmx-exporter/jmx_prometheus_javaagent.jar=9308:/opt/jmx-exporter/kafka_jmx_config.yml'
+    volumes:
+      - ./monitoring/jmx_exporter:/opt/jmx-exporter
+
+  kafka3:
+    image: confluentinc/cp-kafka:8.0.4
+    container_name: kafka3
+    ports:
+      - "9094:9094"
+    environment:
+      KAFKA_NODE_ID: 3
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: 'CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT'
+      KAFKA_ADVERTISED_LISTENERS: 'PLAINTEXT://kafka3:29092,PLAINTEXT_HOST://localhost:9094'
+      KAFKA_PROCESS_ROLES: 'broker,controller'
+      KAFKA_CONTROLLER_QUORUM_VOTERS: '1@kafka1:29093,2@kafka2:29093,3@kafka3:29093'
+      KAFKA_LISTENERS: 'PLAINTEXT://kafka3:29092,CONTROLLER://kafka3:29093,PLAINTEXT_HOST://0.0.0.0:9094'
+      KAFKA_INTER_BROKER_LISTENER_NAME: 'PLAINTEXT'
+      KAFKA_CONTROLLER_LISTENER_NAMES: 'CONTROLLER'
+      CLUSTER_ID: 'MkU3OEVBNTcwNTJENDM2Qk'
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 3
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 2
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 3
+      KAFKA_JMX_PORT: 9999
+      KAFKA_JMX_HOSTNAME: kafka3
+      KAFKA_OPTS: '-javaagent:/opt/jmx-exporter/jmx_prometheus_javaagent.jar=9308:/opt/jmx-exporter/kafka_jmx_config.yml'
+    volumes:
+      - ./monitoring/jmx_exporter:/opt/jmx-exporter
+
+  jupyter:
+    build:
+      context: ./jupyter
+      dockerfile: Dockerfile
+    container_name: jupyter
+    ports:
+      - "8888:8888"
+    volumes:
+      - ./tmp:/home/jovyan/data
+      - ./notebooks:/home/jovyan/work
+    environment:
+      JUPYTER_TOKEN: "smartfarm"
+    depends_on:
+      - kafka1
+      - kafka2
+      - kafka3
+
