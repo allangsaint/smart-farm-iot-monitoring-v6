@@ -1,11 +1,42 @@
 package config
 
+import AppConfig.OneMinute
 import com.typesafe.config.ConfigFactory
 import com.typesafe.config.Config
+
 import scala.jdk.CollectionConverters._
 
 object AppConfig {
 
+  // Mapeo de sensores a zonas
+  // Ejemplo: sensor1 -> zona1, sensor2 -> zona2
+  type SensorId = String
+  type ZoneId = String
+  val Zone1: ZoneId = "zona1"
+  val Zone2: ZoneId = "zona2"
+  val Zone3: ZoneId = "zona3"
+
+  // Identifica la zona a la que pertenece un dispositivo
+  val sensorToZoneMap: Map[SensorId, ZoneId] = Map(
+    "sensor1" -> Zone1,
+    "sensor2" -> Zone1,
+    "sensor3" -> Zone1,
+    "sensor4" -> Zone2,
+    "sensor5" -> Zone2,
+    "sensor6" -> Zone2,
+    "sensor7" -> Zone3,
+    "sensor8" -> Zone3,
+    "sensor9" -> Zone3)
+
+  val OneMinute = "1 minute"
+  val OneHour = "1 hour"
+  val OneDay = "1 day"
+  val OneWeek = "1 week"
+  val OneMonth = "1 month"
+  val OneYear = "1 year"
+
+  val WatermarkDuration: String = OneMinute
+  val WindowDuration: String = OneMinute
   // TODO: ¿Qué tal si usamos el fichero application.conf y TypeSafe Config?
   val config: Config = ConfigFactory.load()
   // Configuración de Kafka
