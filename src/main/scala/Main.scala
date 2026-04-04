@@ -1,12 +1,9 @@
-import config.AppConfig
 import config.AppConfig._
-import domain.IoTDomain._
+import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.streaming.Trigger
-import org.apache.spark.sql.{Dataset, SparkSession}
 import spark.datavalidations.DataValidationsV2
 import spark.{ErrorLevel, SparkSessionWrapper, SparkUtils}
-import utils.DataTransformations._
 import utils.DirectoryCleaner
 
 object Main extends SparkUtils with SparkSessionWrapper {
@@ -103,12 +100,11 @@ object Main extends SparkUtils with SparkSessionWrapper {
     // Analitica con cube
     // Temperatura promedio por sensor y zona con ventana de 1 hora
     val tempAnalyticsCube = enrichedTempDF
-      .groupBy(
+      .cube(
         window($"timestamp", "1 hour"),
         $"zoneId",
         $"sensorId"
       )
-      .cube($"zoneId", $"sensorId")
       .agg(
         avg("temperature").as("avg_temp"),
         max("temperature").as("max_temp"), // T6
