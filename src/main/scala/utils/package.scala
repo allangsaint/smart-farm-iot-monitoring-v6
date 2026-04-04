@@ -1,4 +1,4 @@
-import AppConfig.sensorToZoneMap
+import config.AppConfig.sensorToZoneMap
 import org.apache.spark.sql.{DataFrame, Dataset}
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.functions.{col, udf}

@@ -1,3 +1,4 @@
+import config.AppConfig
 import org.scalatest.funsuite.AnyFunSuite
 
 /**

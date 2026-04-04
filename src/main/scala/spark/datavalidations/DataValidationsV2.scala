@@ -50,7 +50,7 @@ object DataValidationsV2 {
       "La linea de Soil no tiene los 3 campos requeridos".invalidNel
     } else {
       (validateSensorId(p(0)), validateDouble(p(1), "Soil Moisture"), validateTimestamp(p(2)))
-        .mapN((id, mst, time) => SoilMoistureData(id, mst, time, None))
+        .mapN((id, mst, time) => SoilMoistureData(id, mst, time))
     }
   }
 
