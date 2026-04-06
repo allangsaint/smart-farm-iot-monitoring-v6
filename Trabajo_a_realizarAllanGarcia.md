@@ -565,6 +565,9 @@ KPI 6: Prediccion de necesidad de riego
 ## 11. DesarrolloIoTAllan
 
 ### Generacion del Datavalidations (en vista de que existia en el v5 pero no en el v6)
+
+```scala
+
 package spark.datavalidations
 
 import cats.data.ValidatedNel
@@ -601,7 +604,10 @@ object DataValidationsV2 {
       .mapN((id, mst, time) => SoilMoistureData(id, mst, time, None))
   }
 }
+```
+
 ### Codigo del Main
+```scala
 import config.AppConfig
 import config.AppConfig._
 import domain.IoTDomain._
@@ -703,3 +709,4 @@ object Main extends SparkUtils with SparkSessionWrapper {
     query.awaitTermination()
   }
 }
+```

@@ -159,25 +159,25 @@ Sin embargo, había un error que impedía compilar: en `validarDatosSensorSoil` 
 
 ---
 
-### T3: Eliminar rutas hardcodeadas — REALIZADA
+### T3: Eliminar rutas hardcodeadas — REALIZADA parcialmente
 
 Has utilizado `getRutaParaTabla()` y `getRutaParaTablaChk()` de `AppConfig` para la persistencia en Delta Lake del stream de temperatura. Bien hecho.
 
-Sin embargo, hay un detalle: en la línea donde configuras el servidor de Kafka para temperatura, has puesto `"localhost:9092"` directamente en vez de usar la constante `kafkaBootstrapServers` de `AppConfig` (que sí usas para CO2 y Soil). Es un descuido menor pero va en contra del espíritu de esta tarea.
+Sin embargo, hay un detalle: en la línea donde configuras el servidor de Kafka para temperatura, has puesto `"localhost:9092"` directamente en vez de usar la constante `kafkaBootstrapServers` de `AppConfig`. Es un descuido menor pero va en contra del espíritu de esta tarea.
 
 ---
 
-### T4: Asignar zona a los datos de CO2 — REALIZADA con enfoque alternativo
+### T4: Asignar zona a los datos de CO2 — NO realizada
 
-Has asignado zona al CO2 mediante un broadcast join con el JSON de zonas (`enrichedCO2DF = co2DF.join(zonasBroadcast, "sensorId")`). Es un enfoque válido y de hecho más robusto que la UDF que se sugería. Bien pensado.
+En tu `Main.scala` no hay ningún procesamiento del stream de CO2. Solo se procesa el stream de temperatura/humedad. El broadcast join con el JSON de zonas que has implementado se aplica únicamente al stream de temperatura, no al de CO2 como pedía esta tarea.
 
-Lo que no has hecho es aplicar lo mismo a Humedad del Suelo. Solo CO2 tiene el join con zonas.
+Para completarla, habrías necesitado leer el topic `co2` de Kafka, aplicar las validaciones, y enriquecer los datos con la zona (ya sea con la UDF `sensorIdToZoneId` o con el broadcast join que ya tienes montado).
 
 ---
 
 ### T5: Persistir CO2 y Humedad del Suelo en Delta Lake — NO realizada
 
-Solo se persiste en Delta Lake el stream de temperatura. Los datos de CO2 se muestran por consola (con una agregación por zona, que está bien) pero no se escriben en Delta. Los datos de Humedad del Suelo no aparecen en ningún writeStream, ni a consola ni a Delta.
+Solo se persiste en Delta Lake el stream de temperatura. En tu `Main.scala` no hay ningún procesamiento de los streams de CO2 ni de Humedad del Suelo: no se leen de Kafka, no se validan, no se muestran por consola y no se escriben en Delta.
 
 Esta era una de las tareas con más peso (4 horas estimadas) y no se ha abordado.
 
@@ -193,15 +193,13 @@ El problema es que la forma de usar `cube` estaba mal: hacías `groupBy(...).cub
 
 ### Bonus — Enfoque interesante pero incompleto
 
-Has cargado el mapeo de zonas desde un fichero JSON (`mapping_zonas.json`) usando broadcast join en vez de la UDF hardcodeada. Esto se acerca a la Opción A del bonus (externalizar el mapa de sensores). Sin embargo, no has modificado `application.conf` ni hay un test que verifique la carga, que era lo que se pedía.
+Has cargado el mapeo de zonas desde un fichero JSON (`mapping_zonas.json`) usando broadcast join en vez de la UDF hardcodeada para enriquecer el stream de temperatura. Esto se acerca a la Opción A del bonus (externalizar el mapa de sensores). Sin embargo, no has modificado `application.conf` ni hay un test que verifique la carga, que era lo que se pedía. Además, este enfoque solo se aplica al stream de temperatura, no a CO2 ni Humedad del Suelo.
 
 ---
 
-### Tests — Buen esfuerzo
+### Tests — NO realizados
 
-Has escrito tests para prácticamente todos los módulos del proyecto: `IoTDomain`, `KafkaDataGenerator`, `SparkSessionWrapper`, `SparkUtils`, `Implicits`, `DataValidations`, `DataValidationsV2`, `DataTransformations`, `DirectoryCleaner`, `Logging`, `AppConfig` y `PackageTest`. Eso demuestra dedicación.
-
-Algunos tests son correctos y útiles. Otros testean métodos que no has implementado (V1 de CO2/Soil) y por tanto no pueden pasar como están.
+En tu entrega no se incluyen tests unitarios. Las tareas T1, T2 y T6 pedían expresamente escribir tests para los nuevos métodos y validaciones. Los criterios de evaluación asignan un 20% a tests unitarios (cobertura y calidad), por lo que esta carencia tiene un impacto significativo en la nota.
 
 ---
 
@@ -211,21 +209,26 @@ Algunos tests son correctos y útiles. Otros testean métodos que no has impleme
 |---|---|---|
 | **T1** Validaciones V1 CO2/Soil | No realizada | Los métodos siguen con `assert` provisional |
 | **T2** Validaciones V2 con Cats | Realizada (con error) | Bien planteada, pero `SoilMoistureData` tenía un parámetro de más |
-| **T3** Rutas hardcodeadas | Realizada | Bien, salvo un `"localhost:9092"` suelto |
-| **T4** Zona para CO2 | Realizada parcialmente | CO2 sí, Soil no |
-| **T5** Persistir CO2/Soil en Delta | No realizada | Solo temperatura se persiste |
+| **T3** Rutas hardcodeadas | Realizada parcialmente | Bien para temperatura, pero `"localhost:9092"` hardcodeado |
+| **T4** Zona para CO2 | No realizada | No hay procesamiento de CO2 en Main |
+| **T5** Persistir CO2/Soil en Delta | No realizada | Solo temperatura se persiste; CO2 y Soil no se procesan |
 | **T6** Analíticas min/max/count | Realizada (con error) | Buena idea, pero `cube` mal usado |
-| **Bonus** | Enfoque interesante | JSON + broadcast en vez de UDF, pero incompleto |
-| **Tests** | Buen esfuerzo | Muchos tests, aunque algunos no pueden pasar |
+| **Bonus** | Enfoque interesante | JSON + broadcast para temperatura, pero incompleto |
+| **Tests** | No realizados | No se incluyen tests en la entrega |
 | **Compilación** | No compilaba | 5 errores que impedían compilar |
 
 ---
 
 ### Nota final
 
-Allan, se ve que has trabajado en el proyecto y que has entendido parte de la arquitectura. El uso de broadcast join para enriquecer los datos es una buena decisión técnica. Las validaciones V2 con Cats están bien planteadas. Y el volumen de tests demuestra que te has tomado en serio esa parte.
+Allan, se ve que has trabajado en el proyecto y que has entendido parte de la arquitectura. El uso de broadcast join para enriquecer los datos de temperatura es una buena decisión técnica. Las validaciones V2 con Cats están bien planteadas.
+
+Sin embargo, la entrega se queda corta respecto a lo pedido. De las 6 tareas obligatorias, solo T2 (con error), T3 (parcial) y T6 (con error) se han abordado. T1, T4 y T5 no se han realizado. Además, no se incluyen tests unitarios y el proyecto no compilaba.
+
+En concreto, el `Main.scala` solo procesa el stream de temperatura/humedad. Los streams de CO2 y Humedad del Suelo no se leen de Kafka, no se validan, no se enriquecen con zona y no se persisten — lo que deja sin hacer T4 y T5 por completo.
 
 Donde hay que mejorar es en:
-- **Completar lo que se empieza.** T1 y T5 se quedaron sin hacer, y son tareas con peso.
+- **Abordar todas las tareas pedidas.** T1, T4 y T5 no se han tocado, y representan 9 de las 17 horas estimadas.
+- **Escribir tests.** Los criterios de evaluación asignan un 20% a tests y no hay ninguno en la entrega.
 - **Verificar que el código compila antes de entregar.** Esto es fundamental en cualquier entrega.
 - **Entender bien las APIs que usas.** El error de `cube` indica que se usó sin acabar de entender cómo funciona.
